@@ -1,0 +1,5 @@
+/target
+/.venv
+# Exported GPU cores — regenerate with export/export_bellman_core.py
+/artifacts/
+__pycache__/
