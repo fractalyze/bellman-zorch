@@ -761,7 +761,7 @@ dependencies = [
 [[package]]
 name = "xla-pjrt"
 version = "0.1.0"
-source = "git+https://github.com/fractalyze/xla-pjrt#34d899df162531241029eb080056f8976e092538"
+source = "git+https://github.com/fractalyze/xla-pjrt?rev=e955dc16a78af2889e262029400eba7f6a29bb6f#e955dc16a78af2889e262029400eba7f6a29bb6f"
 dependencies = [
  "bindgen",
  "libloading",

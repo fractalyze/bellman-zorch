@@ -18,9 +18,9 @@ use halo2curves::bn256::{Bn256, Fq, Fq2, Fr, G1Affine, G2Affine, G1, G2};
 
 // xla-pjrt is curve-agnostic, so the caller names the buffer-type tags it needs.
 use xla_pjrt::sys::{
-    PJRT_Buffer_Type_PJRT_Buffer_Type_BN254_G1_AFFINE as BN254_G1_AFFINE,
-    PJRT_Buffer_Type_PJRT_Buffer_Type_BN254_G2_AFFINE as BN254_G2_AFFINE,
-    PJRT_Buffer_Type_PJRT_Buffer_Type_BN254_SF as BN254_SF,
+    PJRT_Buffer_Type_BN254_G1_AFFINE as BN254_G1_AFFINE,
+    PJRT_Buffer_Type_BN254_G2_AFFINE as BN254_G2_AFFINE,
+    PJRT_Buffer_Type_BN254_SF as BN254_SF,
 };
 
 use crate::setup::GpuProvingKey;
