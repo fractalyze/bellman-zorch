@@ -16,7 +16,12 @@ use ff::PrimeField;
 use group::{prime::PrimeCurveAffine, Group};
 use halo2curves::bn256::{Bn256, Fq, Fq2, Fr, G1Affine, G2Affine, G1, G2};
 
-use xla_pjrt::{BN254_G1_AFFINE, BN254_G2_AFFINE, BN254_SF};
+// xla-pjrt is curve-agnostic, so the caller names the buffer-type tags it needs.
+use xla_pjrt::sys::{
+    PJRT_Buffer_Type_PJRT_Buffer_Type_BN254_G1_AFFINE as BN254_G1_AFFINE,
+    PJRT_Buffer_Type_PJRT_Buffer_Type_BN254_G2_AFFINE as BN254_G2_AFFINE,
+    PJRT_Buffer_Type_PJRT_Buffer_Type_BN254_SF as BN254_SF,
+};
 
 use crate::setup::GpuProvingKey;
 
@@ -77,9 +82,9 @@ fn assert_core_shape(path: &str, n: usize, m: usize, num_inputs: usize) {
     }
 }
 
-const SF: usize = xla_pjrt::SF_BYTES; // scalar / coordinate bytes
-const G1B: usize = xla_pjrt::G1_BYTES; // G1 affine bytes (x ‖ y)
-const G2B: usize = xla_pjrt::G2_BYTES; // G2 affine bytes
+const SF: usize = 32; // scalar / coordinate bytes (zk_dtypes 32-byte LE limb)
+const G1B: usize = 2 * SF; // G1 affine: x ‖ y
+const G2B: usize = 4 * SF; // G2 affine: x.c0 ‖ x.c1 ‖ y.c0 ‖ y.c1
 
 /// The five group elements bellman's final proof assembly consumes.
 pub struct CoreOutputs {
