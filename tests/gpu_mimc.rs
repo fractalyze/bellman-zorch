@@ -5,8 +5,8 @@
 //! `#[ignore]`d (needs the plugin + core). Build the core once, then:
 //!   JAX_PLATFORMS=cuda,cpu .venv/bin/python \
 //!       export/export_bellman_core.py 1024 <m> 2     # m = num_inputs + num_aux
-//!   export ZKX_PJRT_PLUGIN=.../xla_cuda_plugin.so
-//!   export ZKX_BELLMAN_CORE_MLIRBC=$PWD/artifacts/bellman_core_n1024_m<m>_i2.mlirbc
+//!   export XLA_PJRT_PLUGIN=.../xla_cuda_plugin.so
+//!   export XLA_BELLMAN_CORE_MLIRBC=$PWD/artifacts/bellman_core_n1024_m<m>_i2.mlirbc
 //!   cargo test --test gpu_mimc -- --ignored
 
 use ff::Field;
@@ -22,7 +22,7 @@ mod common;
 use common::{mimc, proof_bytes, MiMCDemo, MIMC_ROUNDS};
 
 #[test]
-#[ignore = "requires the zkx GPU plugin + MiMC-shaped bellman_core (set ZKX_PJRT_PLUGIN / ZKX_BELLMAN_CORE_MLIRBC)"]
+#[ignore = "requires the xla GPU plugin + MiMC-shaped bellman_core (set XLA_PJRT_PLUGIN / XLA_BELLMAN_CORE_MLIRBC)"]
 fn mimc_gpu_proof_matches_bellman_byte_for_byte() {
     let mut rng = thread_rng();
 

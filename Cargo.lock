@@ -59,7 +59,7 @@ dependencies = [
  "pairing",
  "rand",
  "rand_core",
- "zkx-pjrt",
+ "xla-pjrt",
 ]
 
 [[package]]
@@ -759,6 +759,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "xla-pjrt"
+version = "0.1.0"
+source = "git+https://github.com/fractalyze/xla-pjrt#73ac2e04b810f74a24251fde2dbb28ff9ac8b960"
+dependencies = [
+ "bindgen",
+ "libloading",
+]
+
+[[package]]
 name = "zerocopy"
 version = "0.8.52"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -776,12 +785,4 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "zkx-pjrt"
-version = "0.1.0"
-dependencies = [
- "bindgen",
- "libloading",
 ]
