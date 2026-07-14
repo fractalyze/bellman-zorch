@@ -7,7 +7,7 @@
 //! assembly) for both sides. The first GPU proof per size is asserted
 //! byte-identical to the CPU proof.
 //!
-//!   export ZKX_PJRT_PLUGIN=.../pjrt_c_api_gpu_plugin.so
+//!   export ZKX_PJRT_PLUGIN=.../xla_cuda_plugin.so
 //!   cargo run --release --example bench
 
 use std::ops::{AddAssign, MulAssign};

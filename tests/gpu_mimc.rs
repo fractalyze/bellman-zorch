@@ -5,7 +5,7 @@
 //! `#[ignore]`d (needs the plugin + core). Build the core once, then:
 //!   JAX_PLATFORMS=cuda,cpu .venv/bin/python \
 //!       export/export_bellman_core.py 1024 <m> 2     # m = num_inputs + num_aux
-//!   export ZKX_PJRT_PLUGIN=.../pjrt_c_api_gpu_plugin.so
+//!   export ZKX_PJRT_PLUGIN=.../xla_cuda_plugin.so
 //!   export ZKX_BELLMAN_CORE_MLIRBC=$PWD/artifacts/bellman_core_n1024_m<m>_i2.mlirbc
 //!   cargo test --test gpu_mimc -- --ignored
 

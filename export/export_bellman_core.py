@@ -11,9 +11,9 @@ arrays and returns the 5 group elements bellman's final assembly needs:
 where z_std = [inputs ‖ aux] (full assignment), az/bz = A·z / B·z evaluation
 vectors (padded to n), and the queries are bellman's CRS points in dense order.
 
-`lax.fft`/`lax.msm` lower shape-specialized, so an executable is fixed to one
+`lax.ntt`/`lax.msm` lower shape-specialized, so an executable is fixed to one
 (n, m, num_inputs) shape; the point VALUES are runtime inputs. Run with the
-matched zkx 0.0.5 venv (see the README for the install):
+matched jax 0.10 venv (see the README for the install):
 
     JAX_PLATFORMS=cuda,cpu .venv/bin/python \
         export/export_bellman_core.py <n> <m> <num_inputs>
@@ -27,10 +27,18 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 from jax import lax
+from jax.lax import NttType  # jax 0.10 fork exposes the field transform as lax.ntt
 from zk_dtypes import bn254_g1_affine, bn254_g2_affine, bn254_sf, bn254_sf_mont, pfinfo
 
 P = pfinfo(bn254_sf_mont).modulus  # BN254 scalar field modulus
 G = 7  # halo2curves BN254 Fr MULTIPLICATIVE_GENERATOR
+
+
+def _transform(x, n, inverse):
+    """Forward/inverse field transform: `lax.ntt` NTT/INTT with the generator-7
+    root in natural order (no bit-reverse) — bellman's exact h-FFT convention."""
+    kind = NttType.INTT if inverse else NttType.NTT
+    return lax.ntt(x, ntt_type=kind, ntt_length=n, generator=G)
 
 ART = Path(
     os.environ.get(
@@ -56,14 +64,14 @@ def make_core(n: int, m: int, num_inputs: int):
         az = lax.convert_element_type(az_std, bn254_sf_mont)
         bz = lax.convert_element_type(bz_std, bn254_sf_mont)
         cz = az * bz
-        a = lax.fft(az, "IFFT", n, generator=G)
-        b = lax.fft(bz, "IFFT", n, generator=G)
-        c = lax.fft(cz, "IFFT", n, generator=G)
-        ac = lax.fft(a * shift, "FFT", n, generator=G)
-        bc = lax.fft(b * shift, "FFT", n, generator=G)
-        cc = lax.fft(c * shift, "FFT", n, generator=G)
+        a = _transform(az, n, inverse=True)
+        b = _transform(bz, n, inverse=True)
+        c = _transform(cz, n, inverse=True)
+        ac = _transform(a * shift, n, inverse=False)
+        bc = _transform(b * shift, n, inverse=False)
+        cc = _transform(c * shift, n, inverse=False)
         h_evals = (ac * bc - cc) * den
-        h_poly = lax.fft(h_evals, "IFFT", n, generator=G)
+        h_poly = _transform(h_evals, n, inverse=True)
         return lax.convert_element_type(h_poly * inv_shift, bn254_sf)
 
     @jax.jit
