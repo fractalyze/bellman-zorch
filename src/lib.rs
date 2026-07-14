@@ -1,7 +1,7 @@
 //! `bellman-zorch` — a GPU Groth16 prover for [`bellman`], drop-in for
 //! `groth16::create_proof`, that routes the prover's multi-scalar
-//! multiplications to the zkx GPU plugin (via the shared `zkx-pjrt` FFI) while
-//! the FFT stays on CPU. BN256 (= alt_bn128 = BN254), matching the zkx kernels.
+//! multiplications to the xla GPU plugin (via the shared `xla-pjrt` FFI) while
+//! the FFT stays on CPU. BN256 (= alt_bn128 = BN254), matching the xla kernels.
 //!
 //! Built on bellman's own trait stack (`pairing::Engine`, `ff`/`group`) and its
 //! `Parameters`/`multiexp`/`EvaluationDomain`, with bellman's CPU prover kept as

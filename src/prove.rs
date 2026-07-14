@@ -104,7 +104,7 @@ impl ConstraintSystem<Fr> for ProvingAssignment {
 
 /// Generate a Groth16 proof for `circuit` with toxic-waste blinding `(r, s)`,
 /// routing the FFT and all MSMs through the fused GPU core named by
-/// `ZKX_BELLMAN_CORE_MLIRBC`. Byte-identical to `groth16::create_proof` over
+/// `XLA_BELLMAN_CORE_MLIRBC`. Byte-identical to `groth16::create_proof` over
 /// `gk.to_parameters()`.
 pub fn create_proof<C>(
     circuit: C,
@@ -115,8 +115,8 @@ pub fn create_proof<C>(
 where
     C: Circuit<Fr>,
 {
-    let core_path = std::env::var("ZKX_BELLMAN_CORE_MLIRBC")
-        .expect("set ZKX_BELLMAN_CORE_MLIRBC to the bellman_core .mlirbc");
+    let core_path = std::env::var("XLA_BELLMAN_CORE_MLIRBC")
+        .expect("set XLA_BELLMAN_CORE_MLIRBC to the bellman_core .mlirbc");
     create_proof_at(circuit, gk, r, s, &core_path)
 }
 

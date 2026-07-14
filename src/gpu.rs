@@ -1,4 +1,4 @@
-//! BN256 fused GPU Groth16 core: the h-FFT + the five MSMs in a single zkx
+//! BN256 fused GPU Groth16 core: the h-FFT + the five MSMs in a single xla
 //! executable (exported by `export/export_bellman_core.py`). One PJRT
 //! round-trip computes every group element bellman's final assembly needs —
 //! the FFT runs on the GPU too, so there is no per-MSM host↔device shuttling.
@@ -16,7 +16,12 @@ use ff::PrimeField;
 use group::{prime::PrimeCurveAffine, Group};
 use halo2curves::bn256::{Bn256, Fq, Fq2, Fr, G1Affine, G2Affine, G1, G2};
 
-use zkx_pjrt::{BN254_G1_AFFINE, BN254_G2_AFFINE, BN254_SF};
+// xla-pjrt is curve-agnostic, so the caller names the buffer-type tags it needs.
+use xla_pjrt::sys::{
+    PJRT_Buffer_Type_BN254_G1_AFFINE as BN254_G1_AFFINE,
+    PJRT_Buffer_Type_BN254_G2_AFFINE as BN254_G2_AFFINE,
+    PJRT_Buffer_Type_BN254_SF as BN254_SF,
+};
 
 use crate::setup::GpuProvingKey;
 
@@ -24,8 +29,8 @@ use crate::setup::GpuProvingKey;
 /// `.mlirbc` path (callers map a circuit shape → path via the export naming
 /// convention); each is compiled once and reused.
 struct Gpu {
-    session: zkx_pjrt::Session,
-    cores: RefCell<HashMap<String, &'static zkx_pjrt::Executable>>,
+    session: xla_pjrt::Session,
+    cores: RefCell<HashMap<String, &'static xla_pjrt::Executable>>,
 }
 
 thread_local! {
@@ -38,7 +43,7 @@ thread_local! {
 fn gpu() -> &'static Gpu {
     GPU.with(|cell| {
         *cell.borrow_mut().get_or_insert_with(|| {
-            let session = unsafe { zkx_pjrt::Session::new() };
+            let session = unsafe { xla_pjrt::Session::new() };
             Box::leak(Box::new(Gpu {
                 session,
                 cores: RefCell::new(HashMap::new()),
@@ -48,7 +53,7 @@ fn gpu() -> &'static Gpu {
 }
 
 /// Compile (once) and return the fused core at `path`.
-fn core_for(path: &str) -> &'static zkx_pjrt::Executable {
+fn core_for(path: &str) -> &'static xla_pjrt::Executable {
     let g = gpu();
     if let Some(exe) = g.cores.borrow().get(path) {
         return exe;
@@ -77,9 +82,9 @@ fn assert_core_shape(path: &str, n: usize, m: usize, num_inputs: usize) {
     }
 }
 
-const SF: usize = zkx_pjrt::SF_BYTES; // scalar / coordinate bytes
-const G1B: usize = zkx_pjrt::G1_BYTES; // G1 affine bytes (x ‖ y)
-const G2B: usize = zkx_pjrt::G2_BYTES; // G2 affine bytes
+const SF: usize = 32; // scalar / coordinate bytes (zk_dtypes 32-byte LE limb)
+const G1B: usize = 2 * SF; // G1 affine: x ‖ y
+const G2B: usize = 4 * SF; // G2 affine: x.c0 ‖ x.c1 ‖ y.c0 ‖ y.c1
 
 /// The five group elements bellman's final proof assembly consumes.
 pub struct CoreOutputs {
@@ -96,8 +101,8 @@ pub struct CoreOutputs {
 /// proof.
 pub struct PreparedKey<'a> {
     gk: &'a GpuProvingKey<Bn256>,
-    exe: &'static zkx_pjrt::Executable,
-    key: [zkx_pjrt::Buffer; 5], // resident A_q, Bg1_q, Bg2_q, L_q, H_q
+    exe: &'static xla_pjrt::Executable,
+    key: [xla_pjrt::Buffer; 5], // resident A_q, Bg1_q, Bg2_q, L_q, H_q
     m: usize,
     n: usize,
 }

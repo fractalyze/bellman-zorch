@@ -2,11 +2,11 @@
 name = "bellman-zorch"
 version = "0.1.0"
 edition = "2021"
-description = "GPU Groth16 prover for bellman (BN256/alt_bn128) — a drop-in for bellman's groth16::create_proof that routes the multiexp (MSM) to the zkx GPU plugin via PJRT."
+description = "GPU Groth16 prover for bellman (BN256/alt_bn128) — a drop-in for bellman's groth16::create_proof that routes the multiexp (MSM) to the xla GPU plugin via PJRT."
 
-# Own workspace root; the vendored zkx-pjrt FFI shim is a member crate.
+# Own workspace root (no member crates — the PJRT shim now lives in the shared
+# github.com/fractalyze/xla-pjrt repo).
 [workspace]
-members = ["crates/zkx-pjrt"]
 
 [dependencies]
 bellman = { path = "../bellman" }
@@ -15,8 +15,10 @@ ff = "0.13"
 group = "0.13"
 pairing = "0.23"
 rand_core = "0.6"
-zkx-pjrt = { path = "crates/zkx-pjrt" }
-# BN256 = alt_bn128 = BN254 (our zkx GPU kernels' curve), implementing the
+# Pinned: xla-pjrt is a fast-moving shared repo, so pin the rev rather than
+# tracking main (else `cargo update` can drift onto a breaking change).
+xla-pjrt = { git = "https://github.com/fractalyze/xla-pjrt", rev = "e955dc16a78af2889e262029400eba7f6a29bb6f" }
+# BN256 = alt_bn128 = BN254 (our xla GPU kernels' curve), implementing the
 # bellman trait stack (ff 0.13 / group 0.13 / pairing 0.23).
 halo2curves = "0.6"
 

@@ -2,9 +2,9 @@
 
 A GPU Groth16 prover for [`bellman`](https://github.com/zkcrypto/bellman): it
 synthesizes the circuit with bellman's constraint system, runs the **entire
-proving back-end — the h-polynomial FFT and all five MSMs — on the zkx GPU
+proving back-end — the h-polynomial FFT and all five MSMs — on the xla GPU
 plugin in one fused PJRT call**, then finishes with bellman's exact proof
-assembly on the CPU. Over **BN256** (= alt_bn128 = BN254, the zkx kernels'
+assembly on the CPU. Over **BN256** (= alt_bn128 = BN254, the xla kernels'
 curve), so it drives a real-world prover (the one behind Zcash Sapling /
 Filecoin) with a compiler-generated GPU core instead of hand-written `ec-gpu`
 kernels. The proof is **byte-identical** to `groth16::create_proof`.
@@ -12,7 +12,7 @@ kernels. The proof is **byte-identical** to `groth16::create_proof`.
 ## Setup
 
 Needs an NVIDIA GPU (CUDA), a Rust toolchain, `clang`/`libclang` (the in-tree
-`zkx-pjrt` shim generates its PJRT bindings with `bindgen` at build time),
+`xla-pjrt` shim generates its PJRT bindings with `bindgen` at build time),
 Python 3.11, and [`uv`](https://docs.astral.sh/uv/). The crate has one external
 path dep — `bellman` (the zkcrypto 0.14 mainline) — expected next to this repo:
 
@@ -37,8 +37,8 @@ uv pip install --python .venv --index-strategy unsafe-best-match \
 Point the env vars at that venv — copy-paste from the repo root:
 
 ```bash
-export ZKX_VENV_PYTHON=$PWD/.venv/bin/python
-export ZKX_PJRT_PLUGIN=$PWD/.venv/lib/python3.11/site-packages/jax_plugins/xla_cuda12/xla_cuda_plugin.so
+export XLA_VENV_PYTHON=$PWD/.venv/bin/python
+export XLA_PJRT_PLUGIN=$PWD/.venv/lib/python3.11/site-packages/jax_plugins/xla_cuda12/xla_cuda_plugin.so
 ```
 
 ## Running
@@ -48,8 +48,8 @@ export ZKX_PJRT_PLUGIN=$PWD/.venv/lib/python3.11/site-packages/jax_plugins/xla_c
 cargo test
 
 # GPU byte-match on the 322-round MiMC (export its core, then run):
-JAX_PLATFORMS=cuda,cpu "$ZKX_VENV_PYTHON" export/export_bellman_core.py 1024 647 2
-ZKX_BELLMAN_CORE_MLIRBC=$PWD/artifacts/bellman_core_n1024_m647_i2.mlirbc \
+JAX_PLATFORMS=cuda,cpu "$XLA_VENV_PYTHON" export/export_bellman_core.py 1024 647 2
+XLA_BELLMAN_CORE_MLIRBC=$PWD/artifacts/bellman_core_n1024_m647_i2.mlirbc \
     cargo test --test gpu_mimc -- --ignored
 
 # Benchmark sweep (exports a core per size, then runs examples/bench.rs):
@@ -66,7 +66,7 @@ The MiMC test prints its `(n, m, num_inputs)` shape, so a new circuit is just
 // group::WnafGroup; `gk.to_parameters()` gives a bellman `Parameters` too.)
 let gk = bellman_zorch::setup::generate_random_gpu_key::<Bn256, _, _>(circuit, rng)?;
 
-// One proof — ZKX_BELLMAN_CORE_MLIRBC points at a core exported for this shape:
+// One proof — XLA_BELLMAN_CORE_MLIRBC points at a core exported for this shape:
 let proof = bellman_zorch::prove::create_proof(circuit, &gk, r, s)?;
 
 // Many proofs of one circuit — upload the proving key to the device once:
