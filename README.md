@@ -20,24 +20,25 @@ path dep — `bellman` (the zkcrypto 0.14 mainline) — expected next to this re
 git clone https://github.com/zkcrypto/bellman ../bellman   # the ../bellman path dep
 ```
 
-Install the matched zkx 0.0.5 GPU plugin from the public Fractalyze package
-index (this provides `jax_plugins/zkx_gpu/pjrt_c_api_gpu_plugin.so` plus the
-`lax.fft`/`lax.msm` jax fork used by the exporter):
+Install the matched jax 0.10 GPU stack from the public Fractalyze package
+index (this provides `jax_plugins/xla_cuda12/xla_cuda_plugin.so` plus the
+`lax.ntt`/`lax.msm` jax fork used by the exporter):
 
 ```bash
 uv venv --python 3.11 .venv
 uv pip install --python .venv --index-strategy unsafe-best-match \
   --index-url https://fractalyze.github.io/pypi/simple/ \
   --extra-index-url https://pypi.org/simple/ \
-  jax==0.0.5.dev20260409061337 jaxlib==0.0.5.dev20260409061337 \
-  zkx-cuda-pjrt==0.0.5.dev20260409061337 zk-dtypes==0.0.4 numpy==2.4.3
+  jax==0.10.0.dev20260714051543 jaxlib==0.10.0.dev20260714051543 \
+  jax-cuda12-plugin==0.10.0.dev20260714051543 jax-cuda12-pjrt==0.10.0.dev20260714051543 \
+  zk-dtypes==0.0.10 numpy==2.4.3
 ```
 
 Point the env vars at that venv — copy-paste from the repo root:
 
 ```bash
 export ZKX_VENV_PYTHON=$PWD/.venv/bin/python
-export ZKX_PJRT_PLUGIN=$PWD/.venv/lib/python3.11/site-packages/jax_plugins/zkx_gpu/pjrt_c_api_gpu_plugin.so
+export ZKX_PJRT_PLUGIN=$PWD/.venv/lib/python3.11/site-packages/jax_plugins/xla_cuda12/xla_cuda_plugin.so
 ```
 
 ## Running
@@ -75,8 +76,8 @@ let proof = bellman_zorch::prove::create_proof_prepared(circuit, &pk, r, s)?;
 
 The back-end is one exported executable, `bellman_core`
 ([`export/export_bellman_core.py`](export/export_bellman_core.py)) — the h-FFT
-(`lax.fft`, bellman's exact convention: generator 7, no bit-reverse) and the five
-`lax.msm`s, fused. `lax.fft`/`lax.msm` lower shape-specialized, so each core is
+(`lax.ntt`, bellman's exact convention: generator 7, no bit-reverse) and the five
+`lax.msm`s, fused. `lax.ntt`/`lax.msm` lower shape-specialized, so each core is
 fixed to one `(n, m, num_inputs)` shape and the proving-key points are runtime
 inputs.
 
@@ -87,20 +88,20 @@ GPU proof is asserted byte-identical). GPU = key uploaded once, reused:
 
  | rounds |      n | CPU ms | GPU/key | GPU/once | speedup|
  | ------ | ------ | ------ | ------- | -------- | ------ |
- |   4000 |   8192 | 30.65  | 106.33  | 104.65   | 0.29x. |
- |   8000 |  16384 | 54.31  | 119.62  | 116.55   | 0.47x. |
- |  16000 |  32768 | 105.80 | 114.33  | 107.53   | 0.98x. |
- |  32000 |  65536 | 191.87 | 128.21  | 114.89   | 1.67x. |
- |  64000 | 131072 | 365.69 | 153.29  | 128.50   | 2.85x. |
- | 130000 | 262144 | 688.12 | 217.18  | 161.52   | 4.26x. |
+ |   4000 |   8192 | 29.09  | 109.27  | 107.57   | 0.27x. |
+ |   8000 |  16384 | 53.80  | 120.64  | 117.31   | 0.46x. |
+ |  16000 |  32768 | 99.73  | 116.04  | 108.90   | 0.92x. |
+ |  32000 |  65536 | 187.34 | 129.70  | 115.50   | 1.62x. |
+ |  64000 | 131072 | 359.21 | 153.91  | 128.71   | 2.79x. |
+ | 130000 | 262144 | 674.87 | 223.47  | 161.04   | 4.19x. |
 
 ### GPU/once phase breakdown (ms/proof)
 
 | n      | total  | serial | h2d  | dispatch | d2h  | rest  |
 | ------ | ------ | ------ | ---- | -------- | ---- | ----- |
-| 8192   | 104.65 | 0.23   | 0.17 | 102.48   | 0.17 | 1.60  |
-| 16384  | 116.55 | 0.47   | 0.23 | 113.31   | 0.17 | 2.37  |
-| 32768  | 107.53 | 0.93   | 0.37 | 102.26   | 0.21 | 3.75  |
-| 65536  | 114.89 | 2.56   | 0.69 | 104.59   | 0.20 | 6.85  |
-| 131072 | 128.50 | 3.70   | 1.17 | 110.60   | 0.23 | 12.80 |
-| 262144 | 161.52 | 7.43   | 2.22 | 126.38   | 0.25 | 25.24 |
+| 8192   | 107.57 | 0.23   | 0.21 | 105.29   | 0.27 | 1.57  |
+| 16384  | 117.31 | 0.45   | 0.29 | 114.06   | 0.26 | 2.25  |
+| 32768  | 108.90 | 1.07   | 0.47 | 103.30   | 0.28 | 3.78  |
+| 65536  | 115.50 | 2.50   | 0.73 | 105.49   | 0.25 | 6.53  |
+| 131072 | 128.71 | 3.60   | 1.20 | 111.39   | 0.23 | 12.29 |
+| 262144 | 161.04 | 7.21   | 2.21 | 126.74   | 0.29 | 24.59 |

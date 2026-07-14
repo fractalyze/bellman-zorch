@@ -1,4 +1,4 @@
-//! Minimal wrapper over the PJRT C API for the zkx_gpu plugin.
+//! Minimal wrapper over the PJRT C API for the zkx GPU (jax-cuda12) plugin.
 //!
 //! Drives an AOT-lowered StableHLO module (uint8 boundary) on GPU: load plugin
 //! -> create client -> compile -> host buffers -> execute -> copy outputs back.
@@ -15,12 +15,12 @@ use std::mem::{size_of, zeroed};
 use std::os::raw::{c_char, c_void};
 use std::ptr;
 
-/// Path to the `zkx_gpu` plugin `.so`, from env `ZKX_PJRT_PLUGIN`. The plugin
-/// ships in the matched zkx wheel (`jax_plugins/zkx_gpu/pjrt_c_api_gpu_plugin.so`);
+/// Path to the GPU plugin `.so`, from env `ZKX_PJRT_PLUGIN`. The plugin ships in
+/// the matched jax-cuda12 wheel (`jax_plugins/xla_cuda12/xla_cuda_plugin.so`);
 /// see the README for the install + env-var setup.
 pub fn plugin_path() -> String {
     std::env::var("ZKX_PJRT_PLUGIN")
-        .expect("set ZKX_PJRT_PLUGIN to the zkx_gpu pjrt_c_api_gpu_plugin.so")
+        .expect("set ZKX_PJRT_PLUGIN to the jax-cuda12 xla_cuda_plugin.so")
 }
 
 pub struct Pjrt {
@@ -63,7 +63,7 @@ unsafe fn check(api: *const sys::PJRT_Api, err: *mut sys::PJRT_Error, ctx: &str)
 impl Pjrt {
     /// dlopen the plugin and fetch its `PJRT_Api` table.
     pub unsafe fn load() -> Self {
-        let lib = Library::new(plugin_path()).expect("dlopen zkx_gpu plugin");
+        let lib = Library::new(plugin_path()).expect("dlopen GPU plugin");
         let get: Symbol<unsafe extern "C" fn() -> *const sys::PJRT_Api> =
             lib.get(b"GetPjrtApi\0").expect("GetPjrtApi symbol");
         let api = get();
@@ -98,7 +98,7 @@ pub struct Client {
 
 impl Client {
     /// Compile MLIR bytecode in this plugin's context. On a matched zkx stack the
-    /// core's `stablehlo.fft`/`stablehlo.msm` are registered, so the full core
+    /// core's `stablehlo.ntt`/`stablehlo.msm` are registered, so the full core
     /// compiles (a version-skewed plugin instead fails on unregistered ops).
     unsafe fn compile(&self, code: &[u8]) -> *mut sys::PJRT_LoadedExecutable {
         let fmt = b"mlir";

@@ -7,7 +7,7 @@
 //! assembly) for both sides. The first GPU proof per size is asserted
 //! byte-identical to the CPU proof.
 //!
-//!   export ZKX_PJRT_PLUGIN=.../pjrt_c_api_gpu_plugin.so
+//!   export ZKX_PJRT_PLUGIN=.../xla_cuda_plugin.so
 //!   cargo run --release --example bench
 
 use std::ops::{AddAssign, MulAssign};
@@ -104,10 +104,6 @@ fn main() {
     };
     const K: u32 = 10;
     let mut rng = thread_rng();
-    // Experiment escape hatch: the jax-0.10 (lax.ntt) core isn't byte-identical
-    // yet (its FFT output ordering differs), but the ntt+msm compute is the same,
-    // so we still want timings. BENCH_ALLOW_MISMATCH warns instead of asserting.
-    let strict = std::env::var("BENCH_ALLOW_MISMATCH").is_err();
 
     // GPU/key: key re-uploaded every proof. GPU/once: key uploaded once
     // (prepare) then reused. speedup = CPU / (GPU/once).
@@ -153,11 +149,7 @@ fn main() {
 
         // key re-uploaded every proof
         let gpu0 = create_proof_at(circ(), &gk, r, s, &core).unwrap(); // warm up + compile
-        if strict {
-            assert_eq!(proof_bytes(&gpu0), proof_bytes(&cpu0), "GPU != CPU at rounds={rounds}");
-        } else if proof_bytes(&gpu0) != proof_bytes(&cpu0) {
-            eprintln!("  [rounds={rounds}] WARN: GPU != CPU (byte-identity bypassed)");
-        }
+        assert_eq!(proof_bytes(&gpu0), proof_bytes(&cpu0), "GPU != CPU at rounds={rounds}");
         let gpu_key = mean_ms(|| {
             create_proof_at(circ(), &gk, r, s, &core).unwrap();
         }, K);
@@ -165,9 +157,7 @@ fn main() {
         // key uploaded once, reused across proofs; accumulate the phase breakdown
         let prepared = prepare(&core, &gk);
         let (gpu1, _) = create_proof_prepared_timed(circ(), &prepared, r, s).unwrap(); // warm up
-        if strict {
-            assert_eq!(proof_bytes(&gpu1), proof_bytes(&cpu0), "GPU(prepared) != CPU at rounds={rounds}");
-        }
+        assert_eq!(proof_bytes(&gpu1), proof_bytes(&cpu0), "GPU(prepared) != CPU at rounds={rounds}");
         let mut tot = Duration::ZERO;
         let (mut ser, mut h2d, mut disp, mut rb) =
             (Duration::ZERO, Duration::ZERO, Duration::ZERO, Duration::ZERO);

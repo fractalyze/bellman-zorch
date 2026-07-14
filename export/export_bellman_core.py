@@ -11,9 +11,9 @@ arrays and returns the 5 group elements bellman's final assembly needs:
 where z_std = [inputs ‖ aux] (full assignment), az/bz = A·z / B·z evaluation
 vectors (padded to n), and the queries are bellman's CRS points in dense order.
 
-`lax.fft`/`lax.msm` lower shape-specialized, so an executable is fixed to one
+`lax.ntt`/`lax.msm` lower shape-specialized, so an executable is fixed to one
 (n, m, num_inputs) shape; the point VALUES are runtime inputs. Run with the
-matched zkx 0.0.5 venv (see the README for the install):
+matched jax 0.10 venv (see the README for the install):
 
     JAX_PLATFORMS=cuda,cpu .venv/bin/python \
         export/export_bellman_core.py <n> <m> <num_inputs>
@@ -27,27 +27,18 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 from jax import lax
+from jax.lax import NttType  # jax 0.10 fork exposes the field transform as lax.ntt
 from zk_dtypes import bn254_g1_affine, bn254_g2_affine, bn254_sf, bn254_sf_mont, pfinfo
-
-try:
-    from jax.lax import NttType  # jax 0.10 fork exposes the field transform as lax.ntt
-
-    _HAS_NTT = True
-except ImportError:  # jax 0.0.5 line: the field transform is lax.fft(generator=...)
-    _HAS_NTT = False
 
 P = pfinfo(bn254_sf_mont).modulus  # BN254 scalar field modulus
 G = 7  # halo2curves BN254 Fr MULTIPLICATIVE_GENERATOR
 
 
 def _transform(x, n, inverse):
-    """Forward/inverse field transform, bridging the 0.0.5 (`lax.fft`) and 0.10
-    (`lax.ntt`) jax-fork APIs. Same convention either way: generator-7 root,
-    natural order (no bit-reverse)."""
-    if _HAS_NTT:
-        kind = NttType.INTT if inverse else NttType.NTT
-        return lax.ntt(x, ntt_type=kind, ntt_length=n, generator=G)
-    return lax.fft(x, "IFFT" if inverse else "FFT", n, generator=G)
+    """Forward/inverse field transform: `lax.ntt` NTT/INTT with the generator-7
+    root in natural order (no bit-reverse) — bellman's exact h-FFT convention."""
+    kind = NttType.INTT if inverse else NttType.NTT
+    return lax.ntt(x, ntt_type=kind, ntt_length=n, generator=G)
 
 ART = Path(
     os.environ.get(
