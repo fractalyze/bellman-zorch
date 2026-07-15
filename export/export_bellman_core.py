@@ -13,7 +13,7 @@ vectors (padded to n), and the queries are bellman's CRS points in dense order.
 
 `lax.ntt`/`lax.msm` lower shape-specialized, so an executable is fixed to one
 (n, m, num_inputs) shape; the point VALUES are runtime inputs. Run with the
-matched jax 0.10 venv (see the README for the install):
+matched frx 0.10 venv (see the README for the install):
 
     JAX_PLATFORMS=cuda,cpu .venv/bin/python \
         export/export_bellman_core.py <n> <m> <num_inputs>
@@ -23,11 +23,11 @@ import os
 import sys
 from pathlib import Path
 
-import jax
-import jax.numpy as jnp
+import frx
+import frx.numpy as jnp
 import numpy as np
-from jax import lax
-from jax.lax import NttType  # jax 0.10 fork exposes the field transform as lax.ntt
+from frx import lax
+from frx.lax import NttType  # frx exposes the field transform as lax.ntt
 from zk_dtypes import bn254_g1_affine, bn254_g2_affine, bn254_sf, bn254_sf_mont, pfinfo
 
 P = pfinfo(bn254_sf_mont).modulus  # BN254 scalar field modulus
@@ -74,7 +74,7 @@ def make_core(n: int, m: int, num_inputs: int):
         h_poly = _transform(h_evals, n, inverse=True)
         return lax.convert_element_type(h_poly * inv_shift, bn254_sf)
 
-    @jax.jit
+    @frx.jit
     def core(z_std, az_std, bz_std, a_q, bg1_q, bg2_q, l_q, h_q):
         h = h_fft(az_std, bz_std)[: n - 1]
         aux = z_std[num_inputs:]
@@ -92,9 +92,9 @@ def make_core(n: int, m: int, num_inputs: int):
 def write_bytecode(lowered, path):
     m = lowered.compiler_ir(dialect="stablehlo")
     try:
-        from jax._src.interpreters import mlir as _jmlir
+        from frx._src.interpreters import mlir as _fmlir
 
-        data = _jmlir.module_to_bytecode(m)
+        data = _fmlir.module_to_bytecode(m)
     except Exception:
         buf = io.BytesIO()
         m.operation.write_bytecode(buf)

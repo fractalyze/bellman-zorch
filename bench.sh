@@ -3,13 +3,13 @@
 # fused core for each MiMC size, then run the sweep. Pass round counts as args,
 # else the default 2^13..2^18 sweep is used.
 #
-# Requires the matched jax 0.10 export stack (see README) — e.g.:
-#   XLA_PJRT_PLUGIN=$PWD/.venv/lib/python3.11/site-packages/jax_plugins/xla_cuda12/xla_cuda_plugin.so \
+# Requires the matched frx 0.10 export stack (see README) — e.g.:
+#   XLA_PJRT_PLUGIN=$PWD/.venv/lib/python3.11/site-packages/frx_plugins/xla_cuda12/xla_cuda_plugin.so \
 #   XLA_VENV_PYTHON=$PWD/.venv/bin/python ./bench.sh
 set -euo pipefail
 cd "$(dirname "$0")"
-: "${XLA_PJRT_PLUGIN:?set XLA_PJRT_PLUGIN to the jax-cuda12 xla_cuda_plugin.so}"
-: "${XLA_VENV_PYTHON:?set XLA_VENV_PYTHON to the matched jax 0.10 export venv python}"
+: "${XLA_PJRT_PLUGIN:?set XLA_PJRT_PLUGIN to the frx-cuda12 xla_cuda_plugin.so}"
+: "${XLA_VENV_PYTHON:?set XLA_VENV_PYTHON to the matched frx 0.10 export venv python}"
 
 ROUNDS="${*:-4000 8000 16000 32000 64000 130000}"
 

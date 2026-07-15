@@ -20,17 +20,17 @@ path dep — `bellman` (the zkcrypto 0.14 mainline) — expected next to this re
 git clone https://github.com/zkcrypto/bellman ../bellman   # the ../bellman path dep
 ```
 
-Install the matched jax 0.10 GPU stack from the public Fractalyze package
-index (this provides `jax_plugins/xla_cuda12/xla_cuda_plugin.so` plus the
-`lax.ntt`/`lax.msm` jax fork used by the exporter):
+Install the matched frx 0.10 GPU stack from the public Fractalyze package
+index (this provides `frx_plugins/xla_cuda12/xla_cuda_plugin.so` plus the
+`lax.ntt`/`lax.msm` frx distribution used by the exporter):
 
 ```bash
 uv venv --python 3.11 .venv
 uv pip install --python .venv --index-strategy unsafe-best-match \
   --index-url https://fractalyze.github.io/pypi/simple/ \
   --extra-index-url https://pypi.org/simple/ \
-  jax==0.10.0.dev20260714051543 jaxlib==0.10.0.dev20260714051543 \
-  jax-cuda12-plugin==0.10.0.dev20260714051543 jax-cuda12-pjrt==0.10.0.dev20260714051543 \
+  frx==0.10.0.dev20260715051143 frxlib==0.10.0.dev20260715051143 \
+  frx-cuda12-plugin==0.10.0.dev20260715051143 frx-cuda12-pjrt==0.10.0.dev20260715051143 \
   zk-dtypes==0.0.10 numpy==2.4.3
 ```
 
@@ -38,8 +38,11 @@ Point the env vars at that venv — copy-paste from the repo root:
 
 ```bash
 export XLA_VENV_PYTHON=$PWD/.venv/bin/python
-export XLA_PJRT_PLUGIN=$PWD/.venv/lib/python3.11/site-packages/jax_plugins/xla_cuda12/xla_cuda_plugin.so
+export XLA_PJRT_PLUGIN=$PWD/.venv/lib/python3.11/site-packages/frx_plugins/xla_cuda12/xla_cuda_plugin.so
 ```
+
+`frx` keeps the upstream `JAX_*` environment variables (`JAX_PLATFORMS` etc.);
+only the package and module names are rebranded.
 
 ## Running
 
