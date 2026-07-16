@@ -41,13 +41,6 @@ export XLA_VENV_PYTHON=$PWD/.venv/bin/python
 export XLA_PJRT_PLUGIN=$PWD/.venv/lib/python3.11/site-packages/frx_plugins/xla_cuda12/xla_cuda_plugin.so
 ```
 
-`frx` reads JAX's config env vars under the `FRX_*` spelling (`FRX_PLATFORMS`
-etc.): they are mirrored onto the upstream `JAX_*` names at `import frx`, so
-`JAX_*` still works and wins if both are set. Mirroring landed in the pinned
-`0.10.0.dev20260716113241` — older builds ignore `FRX_*` silently. The `XLA_*`
-vars above belong to the xla-pjrt stack and this repo, not to frx config, so
-they keep their names.
-
 ## Running
 
 ```bash
