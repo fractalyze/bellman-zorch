@@ -19,7 +19,7 @@ for r in $ROUNDS; do
   m=$((2 * r + 3))
   if [ ! -f "artifacts/bellman_core_n${n}_m${m}_i2.mlirbc" ]; then
     echo ">>> exporting core n=$n m=$m (rounds=$r)" >&2
-    JAX_PLATFORMS=cuda,cpu "$XLA_VENV_PYTHON" export/export_bellman_core.py "$n" "$m" 2 >/dev/null
+    FRX_PLATFORMS=cuda,cpu "$XLA_VENV_PYTHON" export/export_bellman_core.py "$n" "$m" 2 >/dev/null
   fi
 done
 

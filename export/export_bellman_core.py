@@ -15,7 +15,7 @@ vectors (padded to n), and the queries are bellman's CRS points in dense order.
 (n, m, num_inputs) shape; the point VALUES are runtime inputs. Run with the
 matched frx 0.10 venv (see the README for the install):
 
-    JAX_PLATFORMS=cuda,cpu .venv/bin/python \
+    FRX_PLATFORMS=cuda,cpu .venv/bin/python \
         export/export_bellman_core.py <n> <m> <num_inputs>
 """
 import io
@@ -24,7 +24,7 @@ import sys
 from pathlib import Path
 
 import frx
-import frx.numpy as jnp
+import frx.numpy as fnp
 import numpy as np
 from frx import lax
 from frx.lax import NttType  # frx exposes the field transform as lax.ntt
@@ -51,14 +51,14 @@ ART = Path(
 def _mont(int_list):
     # zk_dtypes casts each Python int (a standard-form residue in [0, P)) to its
     # Montgomery encoding directly, so the dtype does the per-element conversion.
-    return jnp.array(int_list, dtype=bn254_sf_mont)
+    return fnp.array(int_list, dtype=bn254_sf_mont)
 
 
 def make_core(n: int, m: int, num_inputs: int):
     shift = _mont([pow(G, i, P) for i in range(n)])
     ginv = pow(G, P - 2, P)
     inv_shift = _mont([pow(ginv, i, P) for i in range(n)])
-    den = jnp.array(pow((pow(G, n, P) - 1) % P, P - 2, P), dtype=bn254_sf_mont)
+    den = fnp.array(pow((pow(G, n, P) - 1) % P, P - 2, P), dtype=bn254_sf_mont)
 
     def h_fft(az_std, bz_std):
         az = lax.convert_element_type(az_std, bn254_sf_mont)
