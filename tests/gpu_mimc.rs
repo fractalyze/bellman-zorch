@@ -3,7 +3,7 @@
 //! CPU prover and verifying. Needs the MiMC-shaped bellman core.
 //!
 //! `#[ignore]`d (needs the plugin + core). Build the core once, then:
-//!   JAX_PLATFORMS=cuda,cpu .venv/bin/python \
+//!   FRX_PLATFORMS=cuda,cpu .venv/bin/python \
 //!       export/export_bellman_core.py 1024 <m> 2     # m = num_inputs + num_aux
 //!   export XLA_PJRT_PLUGIN=.../xla_cuda_plugin.so
 //!   export XLA_BELLMAN_CORE_MLIRBC=$PWD/artifacts/bellman_core_n1024_m<m>_i2.mlirbc

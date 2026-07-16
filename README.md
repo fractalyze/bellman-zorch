@@ -29,8 +29,8 @@ uv venv --python 3.11 .venv
 uv pip install --python .venv --index-strategy unsafe-best-match \
   --index-url https://fractalyze.github.io/pypi/simple/ \
   --extra-index-url https://pypi.org/simple/ \
-  frx==0.10.0.dev20260715051143 frxlib==0.10.0.dev20260715051143 \
-  frx-cuda12-plugin==0.10.0.dev20260715051143 frx-cuda12-pjrt==0.10.0.dev20260715051143 \
+  frx==0.10.0.dev20260716113241 frxlib==0.10.0.dev20260716113241 \
+  frx-cuda12-plugin==0.10.0.dev20260716113241 frx-cuda12-pjrt==0.10.0.dev20260716113241 \
   zk-dtypes==0.0.10 numpy==2.4.3
 ```
 
@@ -41,8 +41,12 @@ export XLA_VENV_PYTHON=$PWD/.venv/bin/python
 export XLA_PJRT_PLUGIN=$PWD/.venv/lib/python3.11/site-packages/frx_plugins/xla_cuda12/xla_cuda_plugin.so
 ```
 
-`frx` keeps the upstream `JAX_*` environment variables (`JAX_PLATFORMS` etc.);
-only the package and module names are rebranded.
+`frx` reads JAX's config env vars under the `FRX_*` spelling (`FRX_PLATFORMS`
+etc.): they are mirrored onto the upstream `JAX_*` names at `import frx`, so
+`JAX_*` still works and wins if both are set. Mirroring landed in the pinned
+`0.10.0.dev20260716113241` — older builds ignore `FRX_*` silently. The `XLA_*`
+vars above belong to the xla-pjrt stack and this repo, not to frx config, so
+they keep their names.
 
 ## Running
 
@@ -51,7 +55,7 @@ only the package and module names are rebranded.
 cargo test
 
 # GPU byte-match on the 322-round MiMC (export its core, then run):
-JAX_PLATFORMS=cuda,cpu "$XLA_VENV_PYTHON" export/export_bellman_core.py 1024 647 2
+FRX_PLATFORMS=cuda,cpu "$XLA_VENV_PYTHON" export/export_bellman_core.py 1024 647 2
 XLA_BELLMAN_CORE_MLIRBC=$PWD/artifacts/bellman_core_n1024_m647_i2.mlirbc \
     cargo test --test gpu_mimc -- --ignored
 
