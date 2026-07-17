@@ -49,8 +49,10 @@ ART = Path(
 
 def make_core(n: int, m: int, num_inputs: int):
     # The dtype carries the field, so powers and inverses are plain operators.
+    # G**-i would invert per element, i.e. twice the exponentiations of G_inv**i.
+    G_inv = G**-1
     shift = fnp.array([G**i for i in range(n)], dtype=bn254_sf_mont)
-    inv_shift = fnp.array([G**-i for i in range(n)], dtype=bn254_sf_mont)
+    inv_shift = fnp.array([G_inv**i for i in range(n)], dtype=bn254_sf_mont)
     den = fnp.array((G**n - 1) ** -1, dtype=bn254_sf_mont)  # 1/Z on the coset
 
     def h_fft(az_std, bz_std):
