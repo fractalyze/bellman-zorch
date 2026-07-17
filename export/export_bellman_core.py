@@ -28,10 +28,9 @@ import frx.numpy as fnp
 import numpy as np
 from frx import lax
 from frx.lax import NttType  # frx exposes the field transform as lax.ntt
-from zk_dtypes import bn254_g1_affine, bn254_g2_affine, bn254_sf, bn254_sf_mont, pfinfo
+from zk_dtypes import bn254_g1_affine, bn254_g2_affine, bn254_sf, bn254_sf_mont
 
-P = pfinfo(bn254_sf_mont).modulus  # BN254 scalar field modulus
-G = 7  # halo2curves BN254 Fr MULTIPLICATIVE_GENERATOR
+G = bn254_sf_mont(7)  # halo2curves BN254 Fr MULTIPLICATIVE_GENERATOR
 
 
 def _transform(x, n, inverse):
@@ -48,17 +47,11 @@ ART = Path(
 )
 
 
-def _mont(int_list):
-    # zk_dtypes casts each Python int (a standard-form residue in [0, P)) to its
-    # Montgomery encoding directly, so the dtype does the per-element conversion.
-    return fnp.array(int_list, dtype=bn254_sf_mont)
-
-
 def make_core(n: int, m: int, num_inputs: int):
-    shift = _mont([pow(G, i, P) for i in range(n)])
-    ginv = pow(G, P - 2, P)
-    inv_shift = _mont([pow(ginv, i, P) for i in range(n)])
-    den = fnp.array(pow((pow(G, n, P) - 1) % P, P - 2, P), dtype=bn254_sf_mont)
+    # The dtype carries the field, so powers and inverses are plain operators.
+    shift = fnp.array([G**i for i in range(n)], dtype=bn254_sf_mont)
+    inv_shift = fnp.array([G**-i for i in range(n)], dtype=bn254_sf_mont)
+    den = fnp.array((G**n - 1) ** -1, dtype=bn254_sf_mont)  # 1/Z on the coset
 
     def h_fft(az_std, bz_std):
         az = lax.convert_element_type(az_std, bn254_sf_mont)
